@@ -28,33 +28,19 @@ bool playerMessagesDefault = true
 
 bool Property DestroyKey Auto
 bool destroyKeyDefault = False
+
 int Property DestroyKeyProbability Auto
 int destroyKeyProbabilityDefault = 0
+
 int Property DestroyKeyJamChance Auto 
 int destroyKeyJamChanceDefault = 0
 
-Bool Property UseDeviceDifficultyEscape = True Auto
-Bool UseDeviceDifficultyEscapeDefault = True
-Float Property DeviceDifficultyCooldown = 4.0 Auto
-Float DeviceDifficultyCooldownDefault = 4.0
-Float Property DeviceDifficultyModifer = 0.0 Auto
-Float DeviceDifficultyModiferDefault = 0.0
-Float Property DeviceDifficultyCatastrophicFailChance = 10.0 Auto
-Float DeviceDifficultyCatastrophicFailChanceDefault = 10.0
-
-Float Property ArmbinderStruggleBaseChance = 5.0 Auto
-Float ArmbinderStruggleBaseChanceDefault = 5.0
-Int Property ArmbinderMinStruggle = 5 Auto
-Int ArmbinderMinStruggleDefault = 5
-Int Property YokeRemovalCostPerLevel = 200 Auto
-Int YokeRemovalCostPerLevelDefault = 200
-
 bool Property SkyRe Auto
-bool skyreDefault = false
+bool skyreDefault = true
 bool Property LogMessages Auto
 bool logMessagesDefault = true
 bool Property ifp Auto
-bool ifpDefault = false
+bool ifpDefault = true
 bool Property preserveAggro Auto
 bool preserveAggroDefault = true
 bool Property breastNodeManagement Auto
@@ -67,6 +53,16 @@ bool UseBoundCombatDefault = true
 
 bool Property useBoundAnims =  true Auto
 bool useBoundAnimsDefault = true
+
+; Timed Lock Shield Config
+bool property lockShieldActive Auto
+bool lockShieldActiveDefault = false
+bool property lockShieldDebilitating Auto
+bool lockShieldDebilitatingDefault = false
+int property lockShieldMinTime Auto
+int lockShieldMinTimeDefault = 24
+int property lockShieldMaxTime Auto
+int lockShieldMaxTimeDefault = 72
 
 ; Blindfold
 int Property blindfoldMode Auto ; 0 == DD's mode, 1 == DD's mode w/ leeches, 2 == leeches
@@ -200,20 +196,16 @@ int bellyNodeManagementOID
 int useBoundAnimsOID
 int bootsSlowdownToggleOID
 int UseBoundCombatOID 
-Int UseDeviceDifficultyEscapeOID
-Int DeviceDifficultyCooldownOID
-Int DeviceDifficultyModiferOID
-Int DeviceDifficultyCatastrophicFailChanceOID
-Int ArmbinderMinStruggleOID
-Int ArmbinderStruggleBaseChanceOID
-Int YokeRemovalCostPerLevelOID
+int lockShieldActiveOID
+int lockShieldDebilitatingOID
+int lockShieldMinTimeOID
+int lockShieldMaxTimeOID
 
 string[] difficultyList
 string[] blindfoldList
 string[] slotMasks
 int[] SlotMaskValues
 
-GlobalVariable Property zadDebugMode Auto
 
 Function SetupBlindfolds()
 	blindfoldList = new String[4]
@@ -316,6 +308,14 @@ Event OnVersionUpdate(int newVersion)
 			darkfogStrength = darkfogStrengthDefault
 			darkfogStrength2 = (darkfogStrength * 2) - 50
 		EndIf
+
+        if !lockShieldActive
+            lockShieldActive       = lockShieldActiveDefault
+            lockShieldDebilitating = lockShieldDebilitatingDefault
+            lockShieldMinTime      = lockShieldMinTimeDefault
+            lockShieldMaxTime      = lockShieldMaxTimeDefault
+        endif
+
 	EndIf
 	; if CurrentVersion == 0 ; New Game
 	; 	SexlabFramework SexLab = SexLabUtil.GetAPI()
@@ -346,50 +346,47 @@ Event OnPageReset(string page)
 	If page == "General"
 		SetCursorFillMode(TOP_TO_BOTTOM)
 		SetCursorPosition(0) ; Can be removed because it starts at 0 anyway
-		if libs.PlayerRef.WornHasKeyword(libs.zad_Lockable) && zadDebugMode.GetValueInt() != 1
+		if libs.PlayerRef.WornHasKeyword(libs.zad_DeviousBelt)
 			AddHeaderOption("Device Escape Options are unavailable")
-			AddHeaderOption(" while being restrained.")
+			AddHeaderOption(" while wearing a belt.")
 			thresholdOID = -1
 			thresholdModifierOID = -1
 			keyCraftingOID = -1
 			destroyKeyProbabilityOID = -1
-			destroyKeyJamChanceOID = -1			
-			UseDeviceDifficultyEscapeOID = -1
-			DeviceDifficultyCooldownOID = -1
-			DeviceDifficultyModiferOID = -1
-			DeviceDifficultyCatastrophicFailChanceOID = -1
-			ArmbinderMinStruggleOID = -1
-			ArmbinderStruggleBaseChanceOID = -1
-			YokeRemovalCostPerLevelOID =- 1
+			destroyKeyJamChanceOID = -1
+			skyreOID = -1
 		else
 			AddHeaderOption("Device Escape Options")
-			UseDeviceDifficultyEscapeOID = AddToggleOption("Use Device Difficulty Escape", UseDeviceDifficultyEscape)
-			DeviceDifficultyCooldownOID = AddSliderOption("Escape Attempt Cooldown", DeviceDifficultyCooldown, "{1} Hours")
-			DeviceDifficultyModiferOID = AddSliderOption("Difficulty Modifier", DeviceDifficultyModifer, "{1}")
-			DeviceDifficultyCatastrophicFailChanceOID = AddSliderOption("Catastrophic Fail Chance", DeviceDifficultyCatastrophicFailChance, "{1}%")
+			thresholdOID = AddSliderOption("Unlock Threshold", UnlockThreshold)
+			thresholdModifierOID = AddSliderOption("Unlock Threshold Modifier", ThresholdModifier)
 			keyCraftingOID = AddMenuOption("Key Creation Difficulty", difficultyList[KeyCrafting])
 			destroyKeyOID = AddToggleOption("Destroy Key", destroyKey)
 			destroyKeyProbabilityOID = AddSliderOption("Key Break Chance", destroyKeyProbability, "{1}")
 			destroyKeyJamChanceOID = AddSliderOption("Jam LockChance", destroyKeyJamChance, "{1}")
-			ArmbinderStruggleBaseChanceOID = AddSliderOption("Armbinder Escape Base Chance", ArmbinderStruggleBaseChance, "{1}%")
-			ArmbinderMinStruggleOID = AddSliderOption("Armbinder Minimum Struggles", ArmbinderMinStruggle, "{0}")
-			YokeRemovalCostPerLevelOID = AddSliderOption("Yoke Removal Cost Per Level", YokeRemovalCostPerLevel, "{0}/Level")			
-			AddEmptyOption()
-			AddHeaderOption("Legacy Device Escape System")
-			thresholdOID = AddSliderOption("Unlock Threshold", UnlockThreshold)
-			thresholdModifierOID = AddSliderOption("Unlock Threshold Modifier", ThresholdModifier)			
+			skyreOID = AddToggleOption("Using SkyRe", SkyRe)
 		EndIf
-		AddEmptyOption()
-		skyreOID = AddToggleOption("Using SkyRe", SkyRe)
 		AddHeaderOption("Camera Configuration")
 		ifpOID = AddToggleOption("Immersive First Person", ifp)
 		SetCursorPosition(1) ; Move cursor to top right position
 		AddHeaderOption("Message Visibility Settings")
 		npcMessagesOID = AddToggleOption("Show NPC Messages", NpcMessages)
 		playerMessagesOID = AddToggleOption("Show Player Messages", PlayerMessages)
+	        
+        AddHeaderOption("Lock Shield")
+        lockShieldActiveOID       = AddToggleOption("Activate Lock Shield", lockShieldActive)
+    
+        int lockShieldFlag = OPTION_FLAG_NONE
+        if !lockShieldActive
+            lockShieldFlag = OPTION_FLAG_DISABLED
+        endif
+
+        lockShieldDebilitatingOID = AddToggleOption("Include debilitating items", lockShieldDebilitating, lockShieldFlag)
+        lockShieldMinTimeOID      = AddSliderOption("Minimum Time", lockShieldMinTime, "{0}", lockShieldFlag)
+        lockShieldMaxTimeOID      = AddSliderOption("Maximum Time", lockShieldMaxTime, "{0}", lockShieldFlag)
+    
 		AddHeaderOption("Debug")
 		logMessagesOID = AddToggleOption("Enable Debug Logging", LogMessages)
-		SetCursorPosition(1) ; Move cursor to top right position
+
 		; AddHeaderOption("General Settings")
 	ElseIf page == "Devices"
 		SetCursorFillMode(TOP_TO_BOTTOM)
@@ -731,36 +728,16 @@ Event OnOptionSliderOpen(int option)
 		SetSliderDialogDefaultValue(destroyKeyJamChanceDefault)
 		SetSliderDialogRange(0, 100)
 		SetSliderDialogInterval(1)
-	elseIf option == DeviceDifficultyCooldownOID
-		SetSliderDialogStartValue(DeviceDifficultyCooldown)
-		SetSliderDialogDefaultValue(DeviceDifficultyCooldownDefault)
-		SetSliderDialogRange(0.0, 100.0)
-		SetSliderDialogInterval(0.5)
-	elseIf option == DeviceDifficultyModiferOID
-		SetSliderDialogStartValue(DeviceDifficultyModifer)
-		SetSliderDialogDefaultValue(DeviceDifficultyModiferDefault)
-		SetSliderDialogRange(-50.0, 50.0)
-		SetSliderDialogInterval(0.5)
-	elseIf option == DeviceDifficultyCatastrophicFailChanceOID
-		SetSliderDialogStartValue(DeviceDifficultyCatastrophicFailChance)
-		SetSliderDialogDefaultValue(DeviceDifficultyCatastrophicFailChanceDefault)
-		SetSliderDialogRange(0.0, 100.0)
-		SetSliderDialogInterval(0.5)
-	elseIf option == ArmbinderStruggleBaseChanceOID
-		SetSliderDialogStartValue(ArmbinderStruggleBaseChance)
-		SetSliderDialogDefaultValue(ArmbinderStruggleBaseChanceDefault)
-		SetSliderDialogRange(0.0, 100.0)
-		SetSliderDialogInterval(0.5)
-	elseIf option == ArmbinderMinStruggleOID
-		SetSliderDialogStartValue(ArmbinderMinStruggle)
-		SetSliderDialogDefaultValue(ArmbinderMinStruggleDefault)
-		SetSliderDialogRange(0, 50)
-		SetSliderDialogInterval(1)
-	elseIf option == YokeRemovalCostPerLevelOID
-		SetSliderDialogStartValue(YokeRemovalCostPerLevel)
-		SetSliderDialogDefaultValue(YokeRemovalCostPerLevelDefault)
-		SetSliderDialogRange(0, 5000)
-		SetSliderDialogInterval(50)
+    elseIf option == lockShieldMinTimeOID
+        SetSliderDialogStartValue(lockShieldMinTime)
+        SetSliderDialogDefaultValue(lockShieldMinTimeDefault)
+        SetSliderDialogRange(0, lockShieldMaxTime)
+        SetSliderDialogInterval(1)
+    elseIf option == lockShieldMaxTimeOID
+        SetSliderDialogStartValue(lockShieldMaxTime)
+        SetSliderDialogDefaultValue(lockShieldMaxTimeDefault)
+        SetSliderDialogRange(lockShieldMinTime, 168)
+        SetSliderDialogInterval(1)
 	Endif
 EndEvent
 
@@ -829,9 +806,13 @@ Event OnOptionSelect(int option)
 	elseif option == UseBoundCombatOID
 		UseBoundCombat = !UseBoundCombat
 		SetToggleOptionValue(UseBoundCombatOID, UseBoundCombat)
-	elseif option == UseDeviceDifficultyEscapeOID
-		UseDeviceDifficultyEscape = !UseDeviceDifficultyEscape
-		SetToggleOptionValue(UseDeviceDifficultyEscapeOID, UseDeviceDifficultyEscape)
+    elseif option == lockShieldActiveOID
+        lockShieldActive = !lockShieldActive
+        SetToggleOptionValue(lockShieldActiveOID, lockShieldActive)
+        ForcePageReset()
+    elseif option == lockShieldDebilitatingOID
+        lockShieldDebilitating = !lockShieldDebilitating
+        SetToggleOptionValue(lockShieldDebilitatingOID, lockShieldDebilitating)
 	EndIf
 EndEvent
 
@@ -989,27 +970,18 @@ Event OnOptionDefault(int option)
 	elseIf (option == UseBoundCombatOID)
 		UseBoundCombat = UseBoundCombatDefault
 		SetToggleOptionValue(UseBoundCombatOID, UseBoundCombat)
-	elseIf (option == UseDeviceDifficultyEscapeOID)
-		UseDeviceDifficultyEscape = UseDeviceDifficultyEscapeDefault
-		SetToggleOptionValue(UseDeviceDifficultyEscapeOID, UseDeviceDifficultyEscape)
-	elseIf (option == DeviceDifficultyCooldownOID)
-		DeviceDifficultyCooldown = DeviceDifficultyCooldownDefault
-		SetSliderOptionValue(DeviceDifficultyCooldownOID, DeviceDifficultyCooldown)
-	elseIf (option == DeviceDifficultyModiferOID)
-		DeviceDifficultyModifer = DeviceDifficultyModiferDefault
-		SetSliderOptionValue(DeviceDifficultyModiferOID, DeviceDifficultyModifer)
-	elseIf (option == DeviceDifficultyCatastrophicFailChanceOID)
-		DeviceDifficultyCatastrophicFailChance = DeviceDifficultyCatastrophicFailChanceDefault
-		SetSliderOptionValue(DeviceDifficultyCatastrophicFailChanceOID, DeviceDifficultyCatastrophicFailChance)	
-	elseIf (option == ArmbinderStruggleBaseChanceOID)
-		ArmbinderStruggleBaseChance = ArmbinderStruggleBaseChanceDefault
-		SetSliderOptionValue(ArmbinderStruggleBaseChanceOID, ArmbinderStruggleBaseChance)	
-	elseIf (option == ArmbinderMinStruggleOID)
-		ArmbinderMinStruggle = ArmbinderMinStruggleDefault
-		SetSliderOptionValue(ArmbinderMinStruggleOID, ArmbinderMinStruggle)	
-	elseIf (option == YokeRemovalCostPerLevelOID)
-		YokeRemovalCostPerLevel = YokeRemovalCostPerLevelDefault
-		SetSliderOptionValue(YokeRemovalCostPerLevelOID, YokeRemovalCostPerLevel)	
+    elseIf (option == lockShieldActiveOID)
+        lockShieldActive = lockShieldActiveDefault
+        SetToggleOptionValue(lockShieldActiveOID, lockShieldActive)
+    elseIf (option == lockShieldDebilitatingOID)
+        lockShieldDebilitating = lockShieldDebilitatingDefault
+        SetToggleOptionValue(lockShieldDebilitatingOID, lockShieldDebilitating)
+    elseIf (option == lockShieldMinTimeOID)
+        lockShieldMinTime = lockShieldMinTimeDefault
+        SetSliderOptionValue(lockShieldMinTimeOID, lockShieldMinTime, "{0}")
+    elseIf (option == lockShieldMaxTimeOID)
+        lockShieldMaxTime = lockShieldMaxTimeDefault
+        SetSliderOptionValue(lockShieldMaxTimeOID, lockShieldMaxTime, "{0}")
 	endIf
 EndEvent
 
@@ -1124,20 +1096,14 @@ Event OnOptionHighlight(int option)
 		SetInfoText("If enabled, belly will be resized while the corset is worn, to minimized HDT clipping.\nDefault: "+bellyNodeManagementDefault)
 	elseIf (option == UseBoundCombatOID)
 		SetInfoText("If enabled, unarmed combat (Kicking) will be enabled for the player while bound. Currently only works in third person, and only for the armbinder.\nDefault: "+UseBoundCombatDefault)
-	elseIf (option == UseDeviceDifficultyEscapeOID)
-		SetInfoText("If enabled, trying to escape a device will depend it the difficulty of the device itself and some modifiers, such as\na character's experience in lockpicking, relevant magic school, and how many\nrestraints they managed to escape in the past.\nDefault: "+UseDeviceDifficultyEscapeDefault)
-	elseIf (option == DeviceDifficultyCooldownOID)
-		SetInfoText("Time in hours that has to pass before a character to try escaping a restraint again.\nDefault: "+DeviceDifficultyCooldownDefault)
-	elseIf (option == DeviceDifficultyModiferOID)
-		SetInfoText("Modifier applied to the device difficulty. A value greater than zero means that the character is good at escaping devices.\nA value of +10 means that the character has twice the base chance to escape a device with default difficulty.\nDefault: "+DeviceDifficultyModiferDefault)
-	elseIf (option == DeviceDifficultyCatastrophicFailChanceOID)
-		SetInfoText("Chance for an escape attempt to fail in a catastrophic fashion, preventing any further escape attempts.\nDefault: "+DeviceDifficultyCatastrophicFailChanceDefault)
-	elseIf (option == ArmbinderMinStruggleOID)
-		SetInfoText("Minimum amount of times you have to struggle against your armbinder to have a chance to escape it.\nDefault: "+ArmbinderMinStruggleDefault)
-	elseIf (option == ArmbinderStruggleBaseChanceOID)
-		SetInfoText("Base chance to escape your armbinder after the minimum required attemts. 1% will be added to this value for every failed attemt.\nDefault: "+ArmbinderStruggleBaseChanceDefault)
-	elseIf (option == YokeRemovalCostPerLevelOID)
-		SetInfoText("Merchants will charge you this much gold per level for helping you out of a yoke.\nDefault: "+YokeRemovalCostPerLevelDefault)
+    elseIf (option == lockShieldActiveOID)
+        SetInfoText("Enables a shield over a device's lock, disabling the use of keys until the time has passed.\nDefault: " + lockShieldActiveDefault)
+    elseIf (option == lockShieldDebilitatingOID)
+        SetInfoText("Apply lock shield to debilitating items, such as blindfolds and gags.\nDefault: " + lockShieldDebilitatingDefault)
+    elseIf (option == lockShieldMinTimeOID)
+        SetInfoText("Sets the minimum number of hours on the lock shield\nDefault: " + lockShieldMinTime)
+    elseIf (option == lockShieldMaxTimeOID)
+        SetInfoText("Sets the maximum number of hours on the lock shield\nDefault: " + lockShieldMaxTime)
 	endIf
 EndEvent
 
@@ -1228,24 +1194,12 @@ Event OnOptionSliderAccept(int option, float value)
 	elseIf option == numNpcsOID
 		numNpcs = (value as Int)
 		SetSliderOptionValue(option, value, "{1}")
-	elseIf option == DeviceDifficultyCooldownOID
-		DeviceDifficultyCooldown = (value as Float)
-		SetSliderOptionValue(option, value, "{1} Hours")
-	elseIf option == DeviceDifficultyModiferOID
-		DeviceDifficultyModifer = (value as Float)
-		SetSliderOptionValue(option, value, "{1}")
-	elseIf option == DeviceDifficultyCatastrophicFailChanceOID
-		DeviceDifficultyCatastrophicFailChance = (value as Float)
-		SetSliderOptionValue(option, value, "{1}%")
-	elseIf option == ArmbinderStruggleBaseChanceOID
-		ArmbinderStruggleBaseChance = (value as Float)
-		SetSliderOptionValue(option, value, "{1}%")
-	elseIf option == ArmbinderMinStruggleOID
-		ArmbinderMinStruggle = (value as Int)
-		SetSliderOptionValue(option, value, "{0}")
-	elseIf option == YokeRemovalCostPerLevelOID
-		YokeRemovalCostPerLevel = (value as Int)
-		SetSliderOptionValue(option, value, "{0}/Level")	
+    elseIf (option == lockShieldMinTimeOID)
+        lockShieldMinTime = value as Int
+        SetSliderOptionValue(option, value, "{0}")
+	elseIf (option == lockShieldMaxTimeOID)
+        lockShieldMaxTime = value as Int
+        SetSliderOptionValue(option, value, "{0}")
 	EndIf
 EndEvent
 
