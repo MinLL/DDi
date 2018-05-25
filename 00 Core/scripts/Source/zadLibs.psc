@@ -1726,7 +1726,7 @@ EndFunction
 ; Effects
 ;==================================================
 
-function Masturbate(actor a, bool feedback = false)	
+int function MasturbateAt(actor a, ObjectReference center, bool feedback = false)	
 	sslBaseAnimation[] Manims 
 	If a == PlayerRef && feedback
 		NotifyPlayer("You can not resist your urges anymore!")
@@ -1755,7 +1755,11 @@ function Masturbate(actor a, bool feedback = false)
 	Endif
 	actor[] tmp = new actor[1]
 	tmp[0] = a    
-	SexLab.StartSex(tmp, Manims)
+	return SexLab.StartSex(tmp, Manims, centerOn = center,allowBed = center == none)
+endFunction
+
+function Masturbate(actor a, bool feedback = false)	
+	MasturbateAt(a,none,feedback)
 EndFunction
 
 ; Cause actor to have an orgasm.
