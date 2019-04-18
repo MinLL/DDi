@@ -258,7 +258,9 @@ Function EvaluateAA(actor akActor)
 
 	libs.log("EvaluateAA(" + akActor + ")")
 	
-	libs.UpdateControls()
+	If akActor == libs.PlayerRef ; This function was calling UpdateControls unconditionally, seems wrong as it runs when items are equipped on NPCs.
+		libs.UpdateControls()
+	EndIf
 
 	If !HasCompatibleDevice(akActor)
 		libs.log("EvaluateAA: Reverting to unbound AA")		
