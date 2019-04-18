@@ -89,6 +89,8 @@ int baseBumpPumpChanceDefault = 17
 int Property numNpcs = 15 Auto Conditional
 int numNpcsDefault = 15
 
+float Property AnimationLengthModifier = 1.0 Auto
+
 ; Sounds
 float Property VolumeOrgasm = 1.0 Auto
 float volumeOrgasmDefault = 1.0

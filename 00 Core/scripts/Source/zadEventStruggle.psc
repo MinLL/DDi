@@ -53,10 +53,19 @@ Function Execute(actor akActor)
 		return
 	EndIf
 	Eventcooldown = Utility.GetCurrentRealTime() + 300 ; add a 5 min real time cooldown
+	float duration = 10
 	bool[] cameraState = libs.StartThirdPersonAnimation(akActor, struggleStrings[Utility.RandomInt(0, (len - 1) )], true)
-	Utility.Wait(5)
-	libs.Pant(libs.PlayerRef)
-	Utility.Wait(5)
+	libs.SendAnimationStartEvent(akActor, duration)
+
+	While duration > 0 && !libs.IsAnimationCancelled(akActor)
+		If duration == 5
+			libs.Pant(libs.PlayerRef)
+		EndIf
+
+		duration -= 0.1
+		Utility.Wait(0.1)
+	EndWhile
+
 	libs.EndThirdPersonAnimation(akActor, cameraState, true)
 	libs.SexlabMoan(libs.PlayerRef)
 EndFunction

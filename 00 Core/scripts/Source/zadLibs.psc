@@ -1017,7 +1017,7 @@ Function Orgasm(actor akActor)
 	if !IsAnimating(akActor)
 		bool[] cameraState = StartThirdPersonAnimation(akActor, AnimSwitchKeyword(akActor, "Orgasm"), true)
 		int i = 0
-		while i < 20			
+		while i < 20 && !IsAnimationCancelled(akActor)			
 			i += 1		
 			Utility.Wait(1)
 		EndWhile
@@ -1327,16 +1327,48 @@ Function PlayThirdPersonAnimation(actor akActor, string animation, int duration,
 		Warn("Not playing third person animation: Actor is already in a blocking animation.")
 		return
 	EndIf
+
+	If Config.AnimationLengthModifier > 1.0 && duration < 30 && StringUtil.Find(animation, "ft_fall_over", 0) != 0
+		duration = Math.floor(duration + ((1.0-duration/30) * (duration*(Config.AnimationLengthModifier - 1))))
+	EndIf
+
 	bool[] cameraState=StartThirdPersonAnimation(akActor, animation, permitRestrictive=permitRestrictive)
+	SendAnimationStartEvent(akActor, duration as float)
 	Log("Playing animation for "+duration+" seconds.")
-	Utility.Wait(duration)
+
+	float frequencyMs = 0.1
+	float elapsed = 0.0
+	While (elapsed < duration)
+		If IsAnimationCancelled(akActor)
+			Log("Cancelling animation [" + animation + "] after '"+elapsed+"/"+duration+"' seconds elapsed..")
+			elapsed = duration
+		EndIf
+
+		elapsed += frequencyMs
+		Utility.Wait(frequencyMs)
+	EndWhile
+
 	EndThirdPersonAnimation(akActor, cameraState, permitRestrictive=permitRestrictive)
 EndFunction
 
+Function SendAnimationStartEvent(actor akActor, float duration)
+	SendModEvent("DeviousAnimationStart", akActor.GetLeveledActorBase().GetName(), duration)
+EndFunction
+
+bool Function IsAnimationCancelled(actor akActor)
+	return akActor.GetFactionRank(zadAnimatingFaction) == 2
+EndFunction
+
+Function CancelThirdPersonAnimation(actor akActor)
+	If IsAnimating(akActor)
+		akActor.SetFactionRank(zadAnimatingFaction, 2)
+	EndIf
+EndFunction
 
 Function EndThirdPersonAnimation(actor akActor, bool[] cameraState, bool permitRestrictive=false)
 	Log("EndThirdPersonAnimation("+akActor.GetLeveledActorBase().GetName()+","+cameraState+")")
 	SetAnimating(akActor, false)
+	SendModEvent("DeviousAnimationEnd", akActor.GetLeveledActorBase().GetName())
 	if (!akActor.Is3DLoaded() ||  akActor.IsDead() || akActor.IsDisabled())
 		Log("Actor is not loaded (Or is otherwise invalid). Aborting.")
 		return
@@ -1358,8 +1390,8 @@ Function EndThirdPersonAnimation(actor akActor, bool[] cameraState, bool permitR
 EndFunction
 
 
-float Function GetVersion()
-	return 10 ; build number increment to determine the newest version - does NOT correspond with the offical version name. Returns a float not to mess with existing implementations of this function.
+float Function GetVersion() ; Added .1 to identify modified version from DSX -- REMOVE BEFORE PULL REQUEST! :)
+	return 10.1 ; build number increment to determine the newest version - does NOT correspond with the offical version name. Returns a float not to mess with existing implementations of this function.
 EndFunction
 
 String Function GetVersionString()
@@ -1796,7 +1828,7 @@ Function ActorOrgasm(actor akActor, int setArousalTo=-1, int vsID=-1)
 	if !IsAnimating(akActor)
 		bool[] cameraState = StartThirdPersonAnimation(akActor, AnimSwitchKeyword(akActor, "Orgasm"), true)
 		int i = 0
-		while i < 20
+		while i < 20 && !IsAnimationCancelled(akActor)
 			i+= 1
 			if !IsVibrating(akActor) && vsID != -1
 				Sound.StopInstance(vsID)
