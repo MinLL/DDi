@@ -1390,8 +1390,8 @@ Function EndThirdPersonAnimation(actor akActor, bool[] cameraState, bool permitR
 EndFunction
 
 
-float Function GetVersion() ; Added .1 to identify modified version from DSX -- REMOVE BEFORE PULL REQUEST! :)
-	return 10.1 ; build number increment to determine the newest version - does NOT correspond with the offical version name. Returns a float not to mess with existing implementations of this function.
+float Function GetVersion()
+	return 10 ; build number increment to determine the newest version - does NOT correspond with the offical version name. Returns a float not to mess with existing implementations of this function.
 EndFunction
 
 String Function GetVersionString()
