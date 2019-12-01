@@ -1441,16 +1441,36 @@ Function StruggleScene(actor akActor)
 	If len < 0
 		return
 	EndIf
-	bool[] cameraState = libs.StartThirdPersonAnimation(akActor, struggleArray[Utility.RandomInt(0, len)], true)
-	Utility.Wait(10)
-	libs.Pant(libs.PlayerRef)
+	
+	float duration = 10
 	If zad_DeviousDevice == libs.zad_DeviousHeavyBondage
-		Utility.Wait(10)
-		libs.Pant(libs.PlayerRef)
+		duration += 10
 		If Utility.RandomInt() < 50
-			Utility.Wait(10)
+			duration += 10
 		EndIf
 	EndIf
+
+	bool[] cameraState = libs.StartThirdPersonAnimation(akActor, struggleArray[Utility.RandomInt(0, len)], true)
+	libs.SendAnimationStartEvent(akActor, duration)
+	While duration > 0 && !libs.IsAnimationCancelled(akActor)
+		If duration == 20 || duration == 10
+			libs.Pant(libs.PlayerRef)
+		EndIf
+
+		duration -= 0.1
+		Utility.Wait(0.1)
+	EndWhile
+
+	; Utility.Wait(10)
+	; libs.Pant(libs.PlayerRef)
+	; If zad_DeviousDevice == libs.zad_DeviousHeavyBondage
+	; 	Utility.Wait(10)
+	; 	libs.Pant(libs.PlayerRef)
+	; 	If Utility.RandomInt() < 50
+	; 		Utility.Wait(10)
+	; 	EndIf
+	; EndIf
+
 	libs.EndThirdPersonAnimation(akActor, cameraState, true)
 	libs.SexlabMoan(libs.PlayerRef)
 EndFunction
