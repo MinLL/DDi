@@ -13,23 +13,20 @@ int Function OnEquippedFilter(actor akActor, bool silent=false)
 			libs.Log("Avoiding FTM duplication bug (Vaginal Piercings).")
 			return 0
 		EndIf
-		if akActor.WornHasKeyword(libs.zad_DeviousHarness)
-			if akActor == libs.PlayerRef && !silent
-				libs.NotifyActor(strFailEquipHarness, akActor, true)
-			ElseIf  !silent
-				libs.NotifyActor("The harness " + akActor.GetLeveledActorBase().GetName() + " is wearing prevents you from inserting this piercing.", akActor, true)
-			EndIf
-			if !silent
-				return 2
-			Else
-				return 0
-			EndIf
-		Endif
+
 		if akActor.WornHasKeyword(libs.zad_DeviousBelt)
-			if akActor == libs.PlayerRef && !silent
-				libs.NotifyActor(strFailEquipBelt, akActor, true)
-			ElseIf  !silent
-				libs.NotifyActor("The belt " + akActor.GetLeveledActorBase().GetName() + " is wearing prevents you from inserting this piercing.", akActor, true)
+			if akActor.WornHasKeyword(libs.zad_DeviousHarness)
+				if akActor == libs.PlayerRef && !silent
+					libs.NotifyActor(strFailEquipHarness, akActor, true)
+				ElseIf  !silent
+					libs.NotifyActor("The harness " + akActor.GetLeveledActorBase().GetName() + " is wearing prevents you from inserting this piercing.", akActor, true)
+				EndIf
+			Else	
+				if akActor == libs.PlayerRef && !silent
+					libs.NotifyActor(strFailEquipBelt, akActor, true)
+				ElseIf  !silent
+					libs.NotifyActor("The belt " + akActor.GetLeveledActorBase().GetName() + " is wearing prevents you from inserting this piercing.", akActor, true)
+				EndIf
 			EndIf
 			if !silent
 				return 2
