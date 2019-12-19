@@ -598,8 +598,9 @@ sslBaseAnimation[] function SelectValidAnimations(sslThreadController Controller
 	string includetag = ""
 	sslBaseAnimation[] Sanims
 	If previousAnim != none && previousAnim.HasTag("foreplay") 		
-		includetag = "foreplay"
-		libs.Log("Using only foreplay animations.")					
+		; ok, this is causing trouble, as we don't really have a lot of bound foreplay animations. We...just don't pass on the tag for now, which will result in regular anims.
+		; includetag = "foreplay"
+		; libs.Log("Using only foreplay animations.")					
 	Elseif forceaggressive || (previousAnim != none && previousAnim.HasTag("Aggressive") && libs.config.PreserveAggro)
 		libs.Log("Using only aggressive animations.")					
 		aggr = true		
@@ -839,6 +840,8 @@ function Logic(int threadID, bool HasPlayer)
 	;string[] ExtraTags = new String[12]
 	bool UsingArmbinder = False
 	bool UsingYoke = False
+	bool UsingHeavyBondage = False
+	bool UsingStraitJacket = False
 	bool HasBoundActors = False
 	i = originalActors.Length
 	While i > 0
@@ -849,9 +852,11 @@ function Logic(int threadID, bool HasPlayer)
 		PermitOral = PermitOral && !IsBlockedOral(originalActors[i])
 		UsingArmbinder = UsingArmbinder || HasArmbinder(originalActors[i])
 		UsingYoke = UsingYoke || HasYoke(originalActors[i])
-		HasBoundActors = HasBoundActors || libs.IsBound(originalActors[i])
+		UsingStraitJacket = HasStraitJacket(originalActors[i])
+		UsingHeavyBondage = UsingHeavyBondage || (HasHeavyBondage(originalActors[i]) && !UsingStraitJacket) ; DeWired: I've read, straitjackets work almost as non-bound
+		HasBoundActors = HasBoundActors || (libs.IsBound(originalActors[i]) && !UsingStraitJacket) ; DeWired: I've read, straitjackets work almost as non-bound
 	EndWhile
-	Bool NoBindings = !UsingArmbinder && !UsingYoke
+	Bool NoBindings = !UsingHeavyBondage 
 	Bool IsCreatureAnim = previousAnim.HasTag("Creature")
 	
 	; This step is needed, in order to determine if the prior animation is valid (Prevent replacing valid bound anims).
@@ -889,6 +894,7 @@ function Logic(int threadID, bool HasPlayer)
 		StoreHeavyBondage(originalActors)
 		UsingArmbinder = False
 		UsingYoke = False
+		UsingHeavyBondage = False
 		NoBindings = True
 	EndIf
 	
@@ -920,7 +926,7 @@ function Logic(int threadID, bool HasPlayer)
 	int currentActorCount = originalActors.length
 	
 	; Let's try and see if we can get valid animations right here
-	sslBaseAnimation[] anims = SelectValidAnimations(Controller, originalActors.length, previousAnim, false, UsingArmbinder, UsingYoke, HasBoundActors, PermitOral, PermitVaginal, PermitAnal, permitBoobs)
+	sslBaseAnimation[] anims = SelectValidAnimations(Controller, originalActors.length, previousAnim, UsingArmbinder, UsingYoke, HasBoundActors, false, PermitOral, PermitVaginal, PermitAnal, permitBoobs)
 	
 	if anims.length <= 0
 		; we didn't get a valid animation. Let's move the belted actors to solos.
@@ -946,7 +952,7 @@ function Logic(int threadID, bool HasPlayer)
 			EndIf
 		Endif
 		libs.Log("Total actors: " + originalActors.length + ". Participating Actors: " + actors.length + ". Animation: " + previousAnim.name)		
-		anims = SelectValidAnimations(Controller, actors.length, previousAnim, false, UsingArmbinder, UsingYoke, HasBoundActors, PermitOral, PermitVaginal, PermitAnal, permitBoobs)
+		anims = SelectValidAnimations(Controller, actors.length, previousAnim, UsingArmbinder, UsingYoke, HasBoundActors, false, PermitOral, PermitVaginal, PermitAnal, permitBoobs)
 	EndIf
 			
 	if anims.length <= 0
@@ -970,6 +976,7 @@ function Logic(int threadID, bool HasPlayer)
 			StoreHeavyBondage(originalActors)			
 			UsingArmbinder = False
 			UsingYoke = False
+			UsingHeavyBondage = False
 			HasBoundActors = False
 			NoBindings = True		
 			anims = SelectValidAnimations(Controller, actors.length, previousAnim, false, false, false, false, PermitOral, PermitVaginal, PermitAnal, permitBoobs)			
@@ -979,7 +986,7 @@ function Logic(int threadID, bool HasPlayer)
 			while i >= 2 && anims.length==0				
 				i -= 1
 				libs.Log("Reduced number of actors to " + i)								
-				anims = SelectValidAnimations(Controller, i, previousAnim, false, UsingArmbinder, UsingYoke, HasBoundActors, PermitOral, PermitVaginal, PermitAnal, permitBoobs)
+				anims = SelectValidAnimations(Controller, i, previousAnim, UsingArmbinder, UsingYoke, HasBoundActors, false, PermitOral, PermitVaginal, PermitAnal, permitBoobs)
 				;anims = SelectValidAnimations(Controller, i, previousAnim, false, false, false, PermitOral, PermitVaginal, PermitAnal, permitBoobs)
 			EndWhile
 			if anims.length >=1
@@ -1081,6 +1088,14 @@ EndFunction
 
 Bool Function HasPetSuit(Actor akActor)
 	Return (akActor != None) && (akActor.WornHasKeyword(libs.zad_DeviousPetSuit))
+EndFunction
+
+Bool Function HasHeavyBondage(Actor akActor)
+	Return (akActor != None) && (akActor.WornHasKeyword(libs.zad_DeviousHeavyBondage))
+EndFunction
+
+Bool Function HasStraitJacket(Actor akActor)
+	Return (akActor != None) && (akActor.WornHasKeyword(libs.zad_DeviousStraitJacket))
 EndFunction
 
 sslBaseAnimation[] Function GetSoloAnimations(Actor akActor)
