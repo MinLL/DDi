@@ -213,7 +213,7 @@ Event OnEquipped(Actor akActor)
 		libs.RepopulateNpcs()
 	EndIf	
 	OnEquippedPost(akActor)
-	SetLockShield()
+	ResetLockShield()
 	If TimedUnlock
 		SetLockTimer()
 	EndIf
